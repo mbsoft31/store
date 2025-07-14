@@ -1,0 +1,71 @@
+
+### Login
+POST http://localhost:8000/api/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "admin@mail.com",
+    "password": "password"
+}
+
+### Sample login response
+# {
+#   "access_token": "1|UhlhmpWJ0ozirzDVz8BoIOv2gcDsljAJEDLx2V7Ic782018a",
+#   "refresh_token": "2|m4fvIH1upk5DjUQ4LJdmWYD5QXVo2xOI1xlqXSsHb6771a2b",
+#   "expires_in": 3600,
+#   "user": {
+#     "id": "01980486-b823-702f-bbc4-1095336ade0e",
+#     "email": "admin@mail.com",
+#     "role": "owner",
+#     "tenant_id": "01980486-b817-7166-a977-e38293865642",
+#     "tenant": {
+#       "id": "01980486-b817-7166-a977-e38293865642",
+#       "name": "Deckow, Ryan and Pfeffer",
+#       "slug": "deckow-ryan-and-pfeffer",
+#       "settings": "{\"logo\":\"https://ui-avatars.com/api/?name=deckow-ryan-and-pfeffer&background=random\",\"color\":\"#000000\",\"currency\":\"USD\",\"timezone\":\"UTC\",\"locale\":\"en\"}",
+#       "created_at": "2025-07-13T16:03:14.000000Z"
+#     },
+#     "last_login_at": "2025-07-13T16:03:19.000000Z",
+#     "created_at": "2025-07-13T16:03:14.000000Z"
+#   }
+# }
+
+### Get tenant settings
+GET http://localhost:8000/api/tenants/settings
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer 1|UhlhmpWJ0ozirzDVz8BoIOv2gcDsljAJEDLx2V7Ic782018a
+
+### Sample tenant settings response
+# {
+#   "id": "01980486-b817-7166-a977-e38293865642",
+#   "name": "Deckow, Ryan and Pfeffer",
+#   "slug": "deckow-ryan-and-pfeffer",
+#   "settings": "{\"logo\":\"https://ui-avatars.com/api/?name=deckow-ryan-and-pfeffer&background=random\",\"color\":\"#000000\",\"currency\":\"USD\",\"timezone\":\"UTC\",\"locale\":\"en\"}"
+# }
+
+### Update tenant settings
+PUT http://localhost:8000/api/tenants/settings
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer 1|UhlhmpWJ0ozirzDVz8BoIOv2gcDsljAJEDLx2V7Ic782018a
+
+{
+    "name": "Bekhouche Mouadh",
+    "settings": "{\"logo\":\"https://ui-avatars.com/api/?name=deckow-ryan-and-pfeffer&background=random\",\"color\":\"#000000\",\"currency\":\"USD\",\"timezone\":\"UTC\",\"locale\":\"en\"}"
+}
+
+### Sample update response
+# {
+#   "id": "01980486-b817-7166-a977-e38293865642",
+#   "name": "Bekhouche Mouadh",
+#   "slug": "deckow-ryan-and-pfeffer",
+#   "settings": {
+#     "logo": "https://ui-avatars.com/api/?name=deckow-ryan-and-pfeffer&background=random",
+#     "color": "#000000",
+#     "currency": "USD",
+#     "timezone": "UTC",
+#     "locale": "en"
+#   }
+# }
