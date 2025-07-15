@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Tenant, User, type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import {
@@ -18,7 +18,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useForm } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -27,65 +26,177 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-function CreateUserModal({ open, onOpenChange, form, errors, onChange, onSave }: any) {
+function CreateUserModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+        email: '',
+        role: '',
+        password: '',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post('/users', {
+            onSuccess: () => {
+                onOpenChange(false);
+                reset();
+            },
+        });
+    };
+
+    const handleClose = () => {
+        onOpenChange(false);
+        reset();
+    };
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Create User</DialogTitle>
                 </DialogHeader>
-                <div className="mb-4">
-                    <label className="block mb-1">Name</label>
-                    <Input value={form.name} onChange={e => onChange({ ...form, name: e.target.value })} />
-                    {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-1">Email</label>
-                    <Input value={form.email} onChange={e => onChange({ ...form, email: e.target.value })} />
-                    {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-1">Role</label>
-                    <Input value={form.role} onChange={e => onChange({ ...form, role: e.target.value })} />
-                    {errors.role && <p className="text-sm text-red-500 mt-1">{errors.role}</p>}
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-1">Password</label>
-                    <Input type="password" value={form.password} onChange={e => onChange({ ...form, password: e.target.value })} />
-                    {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={onSave}>Create</Button>
-                </DialogFooter>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label className="block mb-1">Name</label>
+                        <Input 
+                            value={data.name} 
+                            onChange={e => setData('name', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-1">Email</label>
+                        <Input 
+                            type="email"
+                            value={data.email} 
+                            onChange={e => setData('email', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-1">Role</label>
+                        <Input 
+                            value={data.role} 
+                            onChange={e => setData('role', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.role && <p className="text-sm text-red-500 mt-1">{errors.role}</p>}
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-1">Password</label>
+                        <Input 
+                            type="password" 
+                            value={data.password} 
+                            onChange={e => setData('password', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={handleClose} disabled={processing}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? 'Creating...' : 'Create'}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );
 }
 
-function EditUserModal({ open, onOpenChange, name, email, role, onNameChange, onEmailChange, onRoleChange, onSave }: any) {
+function EditUserModal({ 
+    open, 
+    onOpenChange, 
+    user 
+}: { 
+    open: boolean; 
+    onOpenChange: (open: boolean) => void; 
+    user: User | null;
+}) {
+    const { data, setData, put, processing, errors, reset } = useForm({
+        name: user?.name || '',
+        email: user?.email || '',
+        role: user?.role || '',
+    });
+
+    // Update form data when user changes
+    React.useEffect(() => {
+        if (user) {
+            setData({
+                name: user.name || '',
+                email: user.email || '',
+                role: user.role || '',
+            });
+        }
+    }, [user]);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+        
+        put(`/users/${user.id}`, {
+            onSuccess: () => {
+                onOpenChange(false);
+                reset();
+            },
+        });
+    };
+
+    const handleClose = () => {
+        onOpenChange(false);
+        reset();
+    };
+
+    if (!user) return null;
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Edit User</DialogTitle>
                 </DialogHeader>
-                <div className="mb-4">
-                    <label className="block mb-1">Name</label>
-                    <Input value={name} onChange={e => onNameChange(e.target.value)} />
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-1">Email</label>
-                    <Input value={email} onChange={e => onEmailChange(e.target.value)} />
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-1">Role</label>
-                    <Input value={role} onChange={e => onRoleChange(e.target.value)} />
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={onSave}>Save</Button>
-                </DialogFooter>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label className="block mb-1">Name</label>
+                        <Input 
+                            value={data.name} 
+                            onChange={e => setData('name', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-1">Email</label>
+                        <Input 
+                            type="email"
+                            value={data.email} 
+                            onChange={e => setData('email', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-1">Role</label>
+                        <Input 
+                            value={data.role} 
+                            onChange={e => setData('role', e.target.value)}
+                            disabled={processing}
+                        />
+                        {errors.role && <p className="text-sm text-red-500 mt-1">{errors.role}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={handleClose} disabled={processing}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? 'Saving...' : 'Save'}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );
@@ -149,13 +260,11 @@ export default function TenantUsers({ users, tenant }: { users: any[]; tenant: a
     const { auth } = usePage<SharedData>().props;
     const [search, setSearch] = useState('');
     const [editUser, setEditUser] = useState<User | null>(null);
-    const [editName, setEditName] = useState('');
-    const [editEmail, setEditEmail] = useState('');
-    const [editRole, setEditRole] = useState('');
     const [showEditModal, setShowEditModal] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [createForm, setCreateForm] = useState({ name: '', email: '', role: '', password: '' });
-    const [createErrors, setCreateErrors] = useState<{ [key: string]: string }>({});
+
+    // Delete form using Inertia
+    const { delete: deleteUser, processing: deleting } = useForm();
 
     if (!tenant) {
         return (
@@ -184,36 +293,17 @@ export default function TenantUsers({ users, tenant }: { users: any[]; tenant: a
 
     const handleEdit = (user: User) => {
         setEditUser(user);
-        setEditName(String(user.field ?? ''));
-        setEditEmail(user.email || '');
-        setEditRole(user.role || '');
         setShowEditModal(true);
-    };
-
-    const handleEditSave = () => {
-        if (!editUser) return;
-        router.put(`/users/${editUser.id}`, { name: editName, email: editEmail, role: editRole }, {
-            onSuccess: () => setShowEditModal(false),
-        });
     };
 
     const handleDelete = (user: User) => {
         if (window.confirm(`Are you sure you want to delete user ${user.email}?`)) {
-            router.delete(`/users/${user.id}`);
+            deleteUser(`/users/${user.id}`);
         }
     };
 
     const handleCreate = () => {
-        setCreateForm({ name: '', email: '', role: '', password: '' });
-        setCreateErrors({});
         setShowCreateModal(true);
-    };
-
-    const handleCreateSave = () => {
-        router.post('/users', createForm, {
-            onSuccess: () => setShowCreateModal(false),
-            onError: (errors) => setCreateErrors(errors),
-        });
     };
 
     return (
@@ -238,15 +328,13 @@ export default function TenantUsers({ users, tenant }: { users: any[]; tenant: a
             <EditUserModal 
                 open={showEditModal} 
                 onOpenChange={setShowEditModal} 
-                name={editName} 
-                email={editEmail}
-                role={editRole} 
-                onNameChange={setEditName} 
-                onEmailChange={setEditEmail}
-                onRoleChange={setEditRole} 
-                onSave={handleEditSave} 
+                user={editUser}
             />
-            <CreateUserModal open={showCreateModal} onOpenChange={setShowCreateModal} form={createForm} errors={createErrors} onChange={setCreateForm} onSave={handleCreateSave} />
+            <CreateUserModal 
+                open={showCreateModal} 
+                onOpenChange={setShowCreateModal} 
+            />
         </AppLayout>
     );
 }
+
