@@ -1,8 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
-import { Tenant, User, type BreadcrumbItem, type SharedData } from '@/types';
+import { User, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import {
     Table,
     TableBody,
@@ -15,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
@@ -108,6 +107,16 @@ function CreateUserModal({ open, onOpenChange }: { open: boolean; onOpenChange: 
     );
 }
 
+type FormValue = string | number | boolean | File | null | undefined;
+
+interface UserForm {
+  name: string;
+  email: string;
+  role: string;
+  [key: string]: FormValue;   // ← makes it a valid FormDataType
+}
+
+
 function EditUserModal({ 
     open, 
     onOpenChange, 
@@ -117,22 +126,23 @@ function EditUserModal({
     onOpenChange: (open: boolean) => void; 
     user: User | null;
 }) {
-    const { data, setData, put, processing, errors, reset } = useForm({
-        name: user?.name || '',
-        email: user?.email || '',
-        role: user?.role || '',
-    });
+    const { data, setData, put, processing, errors, reset } = useForm<any>({
+    name: user?.name ?? '',   // use ?? to drop undefined
+    email: user?.email ?? '',
+    role: user?.role ?? '',
+  });
 
     // Update form data when user changes
-    React.useEffect(() => {
-        if (user) {
-            setData({
-                name: user.name || '',
-                email: user.email || '',
-                role: user.role || '',
-            });
-        }
-    }, [user]);
+    useEffect(() => {
+  if (user) {
+    setData({
+      name: String(user.name ?? ''),
+      email: String(user.email ?? ''),
+      role: String(user.role ?? ''),
+    });
+  }
+}, [user]);
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -227,7 +237,7 @@ function UserTable({ users, tenant, roleColors, onEdit, onDelete }: any) {
                             <TableCell>{idx + 1}</TableCell>
                             <TableCell>
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=random`} alt={user.name || user.email} />
+                                    <AvatarImage src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`} alt={user.email} />
                                     <AvatarFallback>{user.name ? tenant.name[0] : user.email[0]}</AvatarFallback>
                                 </Avatar>
                             </TableCell>
